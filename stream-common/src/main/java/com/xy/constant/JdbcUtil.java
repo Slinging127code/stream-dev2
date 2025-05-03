@@ -55,7 +55,6 @@ public class JdbcUtil {
             }
             list.add(obj);
         }
-
         return list;
     }
 }
