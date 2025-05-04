@@ -11,7 +11,7 @@ import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 /**
  * @Package com.jiao.base.BaseSqlApp
  * @Author xinyi.jiao
- * @Date 2025/5/03 13:52
+ * @Date 2025/5/04  13:52
  * @description: 1
  */
 public abstract class BaseSqlApp {

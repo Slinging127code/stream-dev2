@@ -16,7 +16,7 @@ import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 /**
  * @Package com.jiao.base.BaseApp
  * @Author xinyi.jiao
- * @Date 2025/5/03 15:54
+ * @Date 2025/5/04  15:54
  * @description:
  */
 public abstract class BaseApp {
