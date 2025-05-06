@@ -34,7 +34,7 @@
             prop.setProperty("scan.incremental.snapshot.chunk.key-column","id");
 
             MySqlSource<String> mySqlSource = MySqlSource.<String>builder()
-                    .hostname("10.39.48.36")
+                    .hostname("10.160.60.17")
                     .port(3306)
                     .debeziumProperties(prop)
                     .databaseList("realtime_v1") // 设置捕获的数据库， 如果需要同步整个数据库，请将 tableList 设置为 ".*".
@@ -63,7 +63,7 @@
                     .setDeliveryGuarantee(DeliveryGuarantee.AT_LEAST_ONCE)
                     .build();
 
-            mySQLSource.sinkTo(sink);
+//            mySQLSource.sinkTo(sink);
 
             env.execute("flink_cdc");
         }
