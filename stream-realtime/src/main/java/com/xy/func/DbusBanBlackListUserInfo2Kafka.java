@@ -40,7 +40,7 @@ public class DbusBanBlackListUserInfo2Kafka {
                 ),
                 WatermarkStrategy.noWatermarks(),
                 "xy_fact_comment_source"
-        ).uid("xy_fact_comment_source").name("xy_fact_comment_source");
+        ).uid("str_fact_comment_source").name("str_fact_comment_source");
 //        4> {"info_original_total_amount":"13654.00","info_activity_reduce_amount":"669.90","commentTxt":"小米电视E65X质量差，频繁蓝屏，售后服务也不好。","info_province_id":30,"info_payment_way":"3501","ds":"20250507","info_create_time":1746659067000,"info_refundable_time":1747263867000,"info_order_status":"1001","id":93,"spu_id":6,"table":"comment_info","info_tm_ms":1746596800871,"op":"c","create_time":1746659107000,"info_user_id":260,"info_op":"c","info_trade_body":"小米电视E65X 65英寸 全面屏 4K超高清HDR 蓝牙遥控内置小爱 2+8GB AI人工智能液晶网络平板电视 L65M5-EA等4件商品","sku_id":20,"server_id":"1","dic_name":"N/A","info_consignee_tel":"13275382153","info_total_amount":"12984.10","info_out_trade_no":"387222756456942","appraise":"1202","user_id":260,"info_id":1132,"info_coupon_reduce_amount":"0.00","order_id":1132,"info_consignee":"苏克","ts_ms":1746596801218,"db":"realtime_v1"}
 //        kafkaCdcDbSource.print();
             //对元素进行一个转换

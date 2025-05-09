@@ -227,7 +227,7 @@ public class DbusDBCommentFactData2Kafka {
                 }
                 return jsonObject;
             }
-        }).uid("xy-sensitive-words").name("xy-sensitive-words");
+        }).uid("jxy-sensitive-words").name("jxy-sensitive-words");
 
 //        suppleMapDs.print();
 

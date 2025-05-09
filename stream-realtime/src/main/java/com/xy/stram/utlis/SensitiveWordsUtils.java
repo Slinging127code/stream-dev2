@@ -40,5 +40,6 @@ public class SensitiveWordsUtils {
 
     public static void main(String[] args) {
         System.err.println(getRandomElement(getSensitiveWordsLists()));
+//        System.getProperties("")
     }
 }
