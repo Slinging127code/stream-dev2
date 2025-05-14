@@ -13,6 +13,7 @@ public class Constant {
         public static final String TOPIC_LOG = "xinyi_jiao_log";
         public static final String TOPIC_GL = "realtime_v2_db";
         public static final String TOPIC_FACT = "xinyi_fact_comment_db";
+        public static final String TOPIC_PAGE_LOG= "realtime_v2_page_log";
         public static final String TOPIC_RESULT_SENSTITVE = "xinyi_result_sensitive_words_user";
         public static  final  String TOPIC_API="sk-lbztkgmavrhvykupeijbgqawavmkghfvlslyihnvjxxjkzeo";
         public static final  String TOPIC_API_ADDR="https://api.siliconflow.cn/v1/chat/completions";
