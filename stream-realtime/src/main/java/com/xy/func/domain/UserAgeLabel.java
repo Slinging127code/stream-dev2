@@ -1,8 +1,12 @@
-package com.xy.func;
+package com.xy.func.domain;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
-import com.xy.stram.utlis.HBaseUtil;
+import com.jiao.util.HBaseUtil;
+import com.xy.dwd.JoinDeIn;
+import com.xy.dwd.MapOrderDelitDim;
+import com.xy.dwd.domain.UserInfoStream;
+import com.xy.dwd.domain.UserSupMsg;
 import lombok.SneakyThrows;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.functions.RichMapFunction;
@@ -110,63 +114,14 @@ public class UserAgeLabel {
 
 //        distinctStream.print();
            //提取字段
-        SingleOutputStreamOperator<JSONObject> ds1 = distinctStream.map(new RichMapFunction<JSONObject, JSONObject>() {
-            @Override
-            public JSONObject map(JSONObject jsonObject) throws Exception {
-                JSONObject result = new JSONObject();
-                JSONObject after = jsonObject.getJSONObject("after");
-                Integer birth_decade1 = after.getInteger("birth_decade");
-                Integer age = after.getInteger("age");
-                Integer user_level = after.getInteger("user_level");
-                Long ts_ms = after.getLong("ts_ms");
-                String birthday = after.getString("birthday");
-                String gender = after.getString("gender");
-                String name = after.getString("name");
-                String zodiacSign = after.getString("zodiac_sign");
-                String createTime = after.getString("create_time");
-                Integer id = after.getInteger("id");
-                String birthDecade = after.getString("decade");
-                String login_name = after.getString("login_name");
-                result.put("birthday", birthday);
-                result.put("decade", birthDecade);
-                result.put("name", name);
-                result.put("birth_decade",birth_decade1);
-                result.put("ts_ms", ts_ms);
-                result.put("zodiac_sign", zodiacSign);
-                result.put("id", id);
-                result.put("user_level",user_level);
-                result.put("gender", gender);
-                result.put("age",age);
-                result.put("create_time", createTime);
-                result.put("login_name", login_name);
-                return result;
-            }
-        });
+        SingleOutputStreamOperator<JSONObject> ds1 = distinctStream.map(new UserInfoStream());
             //  ds1.print();
        //TODO 获取 user_info_sup_msg
         SingleOutputStreamOperator<JSONObject> userInfoSuoStream = kafkaStrDS
                 .map(JSON::parseObject)
                 .filter(o -> o.getJSONObject("source").getString("table").equals("user_info_sup_msg"));
                 // userInfoStream.print();
-        SingleOutputStreamOperator<JSONObject> ds2 = userInfoSuoStream.map(new RichMapFunction<JSONObject, JSONObject>() {
-
-            @Override
-            public JSONObject map(JSONObject jsonObject) throws Exception {
-                JSONObject result = new JSONObject();
-                JSONObject after = jsonObject.getJSONObject("after");
-                Integer height = after.getInteger("height");
-                String unit_height = after.getString("unit_height");
-                Integer weight = after.getInteger("weight");
-                String unit_weight = after.getString("unit_weight");
-                Integer uid = after.getInteger("uid");
-                result.put("height", height);
-                result.put("unit_height", unit_height);
-                result.put("weight", weight);
-                result.put("unit_weight", unit_weight);
-                result.put("uid", uid);
-                return result;
-            }
-        });
+        SingleOutputStreamOperator<JSONObject> ds2 = userInfoSuoStream.map(new UserSupMsg());
         // TODO 关联 user_info user_info_sup_msg
         SingleOutputStreamOperator<JSONObject> ds3 = ds1.keyBy(o -> o.getInteger("id"))
         .intervalJoin(ds2.keyBy(o -> o.getInteger("uid")))
@@ -200,23 +155,7 @@ public class UserAgeLabel {
         //TODO 关联 order_detail order_info
         SingleOutputStreamOperator<JSONObject> ds4 = orderDetailStream.keyBy(data -> data.getJSONObject("after").getInteger("order_id")).intervalJoin(orderInfoStream.keyBy(data -> data.getJSONObject("after").getInteger("id")))
                 .between(Time.seconds(-60), Time.seconds(60))
-                .process(new ProcessJoinFunction<JSONObject, JSONObject, JSONObject>() {
-                    @Override
-                    public void processElement(JSONObject detail, JSONObject info, ProcessJoinFunction<JSONObject, JSONObject, JSONObject>.Context context, Collector<JSONObject> collector) throws Exception {
-                        JSONObject result = new JSONObject();
-                        result.put("id", detail.getJSONObject("after").getInteger("id"));
-                        result.put("order_id", detail.getJSONObject("after").getInteger("order_id"));
-                        result.put("sku_id", detail.getJSONObject("after").getInteger("sku_id"));
-                        result.put("sku_name", detail.getJSONObject("after").getString("sku_name"));
-                        result.put("sku_num", detail.getJSONObject("after").getInteger("sku_num"));
-                        result.put("create_time", info.getJSONObject("after").getString("create_time"));
-                        result.put("user_id", info.getJSONObject("after").getInteger("user_id"));
-                        result.put("total_amount", info.getJSONObject("after").getBigDecimal("total_amount"));
-                        result.put("original_total_amount", info.getJSONObject("after").getBigDecimal("original_total_amount"));
-                        result.put("ts_ms", info.getLong("ts_ms"));
-                        collector.collect(result);
-                    }
-                });
+                .process(new JoinDeIn());
 //        {"sku_num":1,"create_time":"1746529711000","user_id":118,"total_amount":6296.0,"sku_id":22,"sku_name":"十月稻田 长粒香大米 东北大米 东北香米 5kg","id":1392,"order_id":794}
 //        ds4.print();
         //TODO 获取 dim_sku_info
@@ -372,73 +311,11 @@ public class UserAgeLabel {
 //        {"category2_name":"电脑整机","sku_num":1,"create_time":"1747078188000","sku_id":15,"original_total_amount":61931.0,"category1_id":"6","tm_name":"联想","tm_id":"3","user_id":88,"total_amount":59531.2,"category1_name":"电脑办公","sku_name":"联想（Lenovo） 拯救者Y9000P 2022 16英寸游戏笔记本电脑 i7-12700H 512G RTX3060 钛晶灰","id":2760,"category3_name":"游戏本","order_id":1431,"category3_id":"287","ts_ms":1747050794618,"category2_id":"33"}
         SingleOutputStreamOperator<JSONObject> Generaltable = ds3.keyBy(data -> data.getString("uid")).intervalJoin(TrademarkSteam.keyBy(data -> data.getString("user_id")))
                 .between(Time.seconds(-30), Time.seconds(30))
-                .process(new ProcessJoinFunction<JSONObject, JSONObject, JSONObject>() {
-                    @Override
-                    public void processElement(JSONObject jsonObject, JSONObject order, ProcessJoinFunction<JSONObject, JSONObject, JSONObject>.Context context, Collector<JSONObject> collector) throws Exception {
-                        JSONObject result = new JSONObject();
-                        Integer height = jsonObject.getInteger("height");
-                        String unit_height = jsonObject.getString("unit_height");
-                        Integer weight = jsonObject.getInteger("weight");
-                        String unit_weight = jsonObject.getString("unit_weight");
-                        Integer uid = jsonObject.getInteger("uid");
-                        result.put("height", height);
-                        result.put("unit_height", unit_height);
-                        result.put("weight", weight);
-                        result.put("unit_weight", unit_weight);
-                        result.put("uid", uid);
-                        Integer birth_decade1 = jsonObject.getInteger("birth_decade");
-                        Integer age = jsonObject.getInteger("age");
-                        Integer user_level = jsonObject.getInteger("user_level");
-                        Long ts_ms = jsonObject.getLong("ts_ms");
-                        String birthday = jsonObject.getString("birthday");
-                        String gender = jsonObject.getString("gender");
-                        String name = jsonObject.getString("name");
-                        String zodiacSign = jsonObject.getString("zodiac_sign");
-                        String createTime = jsonObject.getString("create_time");
-                        Integer id = jsonObject.getInteger("id");
-                        String birthDecade = jsonObject.getString("decade");
-                        String login_name = jsonObject.getString("login_name");
-                        result.put("birthday", birthday);
-                        result.put("decade", birthDecade);
-                        result.put("name", name);
-                        result.put("birth_decade",birth_decade1);
-                        result.put("ts_ms", ts_ms);
-                        result.put("zodiac_sign", zodiacSign);
-                        result.put("id", id);
-                        result.put("user_level",user_level);
-                        result.put("gender", gender);
-                        result.put("age",age);
-                        result.put("create_time", createTime);
-                        result.put("login_name", login_name);
-                        JSONObject result1 = new JSONObject();
-                        result1.put("id", order.getInteger("id"));
-                        result1.put("order_id", order.getInteger("order_id"));
-                        result1.put("sku_id", order.getInteger("sku_id"));
-                        result1.put("sku_name", order.getString("sku_name"));
-                        result1.put("sku_num", order.getInteger("sku_num"));
-                        result1.put("create_time", order.getString("create_time"));
-                        result1.put("user_id", order.getInteger("user_id"));
-                        result1.put("total_amount", order.getBigDecimal("total_amount"));
-                        result1.put("original_total_amount", order.getBigDecimal("original_total_amount"));
-                        result1.put("ts_ms", order.getLong("ts_ms"));
-                        result1.put("category2_id", order.getString("category2_id"));
-                        result1.put("category3_id", order.getString("category3_id"));
-                        result1.put("category1_id", order.getString("category1_id"));
-                        result1.put("tm_name", order.getString("tm_name"));
-                        result1.put("category_name", order.getString("category_name"));
-                        result1.put("os", order.getString("os"));
-                        JSONObject result2 = new JSONObject();
-                        result2.put("Age",result1);
-                        result2.put("user",result);
-                        collector.collect(result2);
-//                        jsonObject.putAll(order);
-//                        collector.collect(jsonObject);
-                    }
-                });
+                .process(new MapOrderDelitDim());
         Generaltable.print();
-//        {"user":{"birthday":"1998-09-06","create_time":"1746533280000","zodiac_sign":"处女座","weight":81,"uid":58,"birth_decade":1990,"login_name":"erh0y4q","unit_height":"cm","name":"孔蓉","user_level":1,"id":58,"unit_weight":"kg","age":26,"height":166},"Age":{"sku_num":1,"create_time":"1746569080000","sku_id":1,"original_total_amount":8367.0,"category1_id":"2","tm_name":"小米","user_id":58,"total_amount":7867.0,"sku_name":"小米12S Ultra 骁龙8+旗舰处理器 徕卡光学镜头 2K超视感屏 120Hz高刷 67W快充 12GB+512GB 冷杉绿 5G手机","id":241,"order_id":163,"category3_id":"61","ts_ms":1747050794587,"category2_id":"13"}}
+//        {"category2_name":"手机通讯","sku_num":1,"create_time":"1746559812000","sku_id":8,"original_total_amount":55488.0,"category1_id":"2","tm_id":"2","user_id":31,"total_amount":54988.0,"category1_name":"手机","sku_name":"Apple iPhone 12 (A2404) 64GB 黑色 支持移动联通电信5G 双卡双待手机","id":804,"category3_name":"手机","order_id":488,"category3_id":"61","ts_ms":1747050794596,"category2_id":"13"}
 
-
+//        Generaltable.map(o->JSON.toJSONString(o)).sinkTo(FlinkSinkUtil.getFlinkSinkUtil("xinyi_all"));
 
 
         env.execute();

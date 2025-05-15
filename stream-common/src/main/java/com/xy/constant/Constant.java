@@ -8,7 +8,8 @@ package com.xy.constant;
  */
 public class Constant {
         public static final String KAFKA_BROKERS = "cdh01:9092,cdh02:9092,cdh03:9092";
-
+        public static final String TOPIC_DIC = "xinyi_jiao_dia";
+        public static final String TOPIC_ALL= "xinyi_all";
         public static final String TOPIC_DB = "xinyi_jiao_yw";
         public static final String TOPIC_LOG = "xinyi_jiao_log";
         public static final String TOPIC_GL = "realtime_v2_db";
