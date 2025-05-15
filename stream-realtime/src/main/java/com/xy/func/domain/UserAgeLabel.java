@@ -2,11 +2,8 @@ package com.xy.func.domain;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
-import com.jiao.util.HBaseUtil;
-import com.xy.dwd.JoinDeIn;
-import com.xy.dwd.MapOrderDelitDim;
-import com.xy.dwd.domain.UserInfoStream;
-import com.xy.dwd.domain.UserSupMsg;
+
+import com.xy.stram.utlis.*;
 import lombok.SneakyThrows;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.functions.RichMapFunction;
